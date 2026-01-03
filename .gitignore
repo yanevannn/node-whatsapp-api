@@ -1,0 +1,19 @@
+# Node
+node_modules/
+
+# Environment
+.env
+
+# WhatsApp session (SANGAT PENTING)
+session/
+sessions/
+auth_info/
+
+# Logs
+*.log
+messages*.csv
+
+# OS
+.DS_Store
+Thumbs.db
+
