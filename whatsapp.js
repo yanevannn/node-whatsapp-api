@@ -6,8 +6,13 @@ const {
 const qrcode = require('qrcode-terminal')
 
 let sock
+let latestQR = null
+let waStatus = 'disconnected' // connected | disconnected | connecting
+
 
 async function connectWA() {
+    waStatus = 'connecting'
+    
     const { state, saveCreds } = await useMultiFileAuthState('session')
 
     sock = makeWASocket({
@@ -20,15 +25,20 @@ async function connectWA() {
         const { connection, lastDisconnect, qr } = update
 
         if (qr) {
-            console.log('📱 Scan the following QR:')
-            qrcode.generate(qr, { small: true })
+            latestQR = qr
+            console.log('📱 QR updated')
+            // console.log('📱 Scan the following QR:')
+            // qrcode.generate(qr, { small: true })
         }
 
         if (connection === 'open') {
+            waStatus = 'connected'
+            latestQR = null
             console.log('✅ WhatsApp Connected')
         }
 
         if (connection === 'close') {
+            waStatus = 'disconnected'
             const reason = lastDisconnect?.error?.output?.statusCode
             const shouldReconnect = reason !== DisconnectReason.loggedOut
 
@@ -36,8 +46,6 @@ async function connectWA() {
 
             if (shouldReconnect) {
                 connectWA()
-            } else {
-                console.log('⚠️ Logout. Delete session & scan again')
             }
         }
     })
@@ -47,4 +55,13 @@ function getSock() {
     return sock
 }
 
-module.exports = { connectWA, getSock }
+function getStatus() {
+    return waStatus
+}
+
+function getQR() {
+    return latestQR
+}
+
+
+module.exports = { connectWA, getSock, getStatus, getQR }

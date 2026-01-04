@@ -1,10 +1,14 @@
 require('dotenv').config()
 const express = require('express');
 const rateLimit = require('express-rate-limit')
-const { connectWA, getSock } = require('./whatsapp');
+const { connectWA, getSock, getStatus, getQR} = require('./whatsapp');
 
 const app = express();
+const cors = require('cors');
+app.use(cors());
 app.use(express.json());
+// app.use(require('cors')());
+
 
 // 🔐 API KEY
 app.use((req, res, next) => {
@@ -33,7 +37,7 @@ const limiter = rateLimit({
 app.use(limiter);
 
 
-app.post('/send-message', async (req, res) => {
+app.post('/wa/send-message', async (req, res) => {
     const { number, message } = req.body;
     console.log('Received request to send message:', number, message);
 
@@ -54,6 +58,38 @@ app.post('/send-message', async (req, res) => {
         res.status(500).json({ error: 'Failed to send message' });
     }
 });
+
+app.get('/wa/status', (req, res) => {
+    res.json({
+        status: getStatus()
+    })
+})
+
+
+app.get('/wa/qr', (req, res) => {
+    const status = getStatus()
+
+    if (status === 'connected') {
+        return res.json({
+            status: 'connected',
+            message: 'WhatsApp already connected'
+        })
+    }
+
+    const qr = getQR()
+
+    if (!qr) {
+        return res.status(404).json({
+            error: 'QR not available yet'
+        })
+    }
+
+    res.json({
+        status: 'disconnected',
+        qr
+    })
+})
+
 
 connectWA();
 
