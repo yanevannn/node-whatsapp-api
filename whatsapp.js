@@ -26,7 +26,7 @@ async function connectWA() {
 
         if (qr) {
             latestQR = qr
-            console.log('📱 QR updated')
+            // console.log('📱 QR updated')
             // console.log('📱 Scan the following QR:')
             // qrcode.generate(qr, { small: true })
         }
@@ -49,6 +49,25 @@ async function connectWA() {
             }
         }
     })
+
+    // Listen for Group messages
+    sock.ev.on('messages.upsert', async m => {
+        const msg = m.messages[0]
+        if (!msg.key.fromMe && m.type === 'notify') {
+            const jid = msg.key.remoteJid
+            const text = msg.message?.conversation || msg.message?.extendedTextMessage?.text
+            
+            // Jika pesan berasal dari grup, tampilkan di log PM2
+            if (jid.endsWith('@g.us')) {
+                console.log(`[GROUP MSG] ID: ${jid} | Pesan: ${text}`)
+            }
+        }
+    })
+}
+
+async function sendMsgGroup(jid, message) {
+    if (waStatus !== 'connected') throw new Error('WhatsApp not connected')
+    return await sock.sendMessage(jid, { text: message })
 }
 
 function getSock() {
@@ -64,4 +83,4 @@ function getQR() {
 }
 
 
-module.exports = { connectWA, getSock, getStatus, getQR }
+module.exports = { connectWA, getSock, getStatus, getQR, sendMsgGroup }

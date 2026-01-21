@@ -1,7 +1,7 @@
 require('dotenv').config()
 const express = require('express');
 const rateLimit = require('express-rate-limit')
-const { connectWA, getSock, getStatus, getQR} = require('./whatsapp');
+const { connectWA, getSock, getStatus, getQR, sendMsgGroup} = require('./whatsapp');
 
 const app = express();
 const cors = require('cors');
@@ -56,6 +56,17 @@ app.post('/wa/send-message', async (req, res) => {
         res.status(200).json({ status: 'Message sent' });
     } catch (error) {
         res.status(500).json({ error: 'Failed to send message' });
+    }
+});
+
+app.post('/wa/send-message-group', async (req, res) => {
+    const { groupId, message } = req.body;
+    try {
+        await sendMsgGroup(groupId, message);
+        res.status(200).json({ status: 'Group message sent' });
+    } catch (error) {
+        // res.status(500).json({ error: 'Failed to send group message' });
+        res.status(500).json({ error: error.message })
     }
 });
 
